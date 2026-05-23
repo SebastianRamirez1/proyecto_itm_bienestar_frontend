@@ -4,6 +4,8 @@ import {
   HeartPulse,
   BookOpen,
   Calendar,
+  Zap,
+  UtensilsCrossed,
   Webhook,
   BarChart2,
   LogOut,
@@ -21,6 +23,8 @@ const navItems = [
   { to: '/health',     label: 'Salud',          icon: HeartPulse },
   { to: '/resources',  label: 'Recursos',       icon: BookOpen },
   { to: '/events',     label: 'Eventos',        icon: Calendar },
+  { to: '/cafeteria',  label: 'Cafetería',      icon: UtensilsCrossed },
+  { to: '/alerts',     label: 'Alertas',        icon: Zap },
 ];
 
 const adminItems = [

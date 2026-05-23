@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useApiError } from '../../../hooks/useApiError';
+import { SkeletonCard } from '../../../components/Skeleton';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Campus {
@@ -44,14 +45,16 @@ export default function HealthPage() {
   const { getErrorMessage } = useApiError();
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: scheduleData } = useQuery<ScheduleData>({
+  const { data: scheduleData, isLoading: scheduleLoading } = useQuery<ScheduleData>({
     queryKey: ['health-schedule'],
     queryFn: () => apiClient.get(EP_HEALTH_SCHEDULE).then((r) => r.data),
+    staleTime: 30 * 60_000,
   });
 
-  const { data: contactsData } = useQuery<ContactsData>({
+  const { data: contactsData, isLoading: contactsLoading } = useQuery<ContactsData>({
     queryKey: ['health-contacts'],
     queryFn: () => apiClient.get(EP_HEALTH_EMERGENCY).then((r) => r.data),
+    staleTime: 30 * 60_000,
   });
 
   const {
@@ -90,6 +93,7 @@ export default function HealthPage() {
       </div>
 
       {/* Schedule */}
+      {scheduleLoading && <SkeletonCard />}
       {schedule && (
         <section className="bg-white rounded-xl border p-6 space-y-4">
           <h2 className="font-semibold text-gray-800 text-lg">{schedule.serviceName}</h2>
@@ -158,6 +162,10 @@ export default function HealthPage() {
       {/* Emergency contacts */}
       <section className="bg-white rounded-xl border p-6 space-y-4">
         <h2 className="font-semibold text-gray-800 text-lg">Contactos de emergencia</h2>
+        {contactsLoading && <SkeletonCard />}
+        {!contactsLoading && contacts.length === 0 && (
+          <p className="text-sm text-gray-400">No hay contactos de emergencia disponibles.</p>
+        )}
         {hotlines.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Líneas nacionales</p>

@@ -11,6 +11,8 @@ import DashboardPage  from './features/dashboard/pages/DashboardPage';
 import HealthPage     from './features/health/pages/HealthPage';
 import ResourcesPage  from './features/resources/pages/ResourcesPage';
 import EventsPage     from './features/events/pages/EventsPage';
+import AlertsPage     from './features/alerts/pages/AlertsPage';
+import CafeteriaPage  from './features/cafeteria/pages/CafeteriaPage';
 import MetricsPage    from './features/metrics/pages/MetricsPage';
 import WebhooksPage   from './features/webhooks/pages/WebhooksPage';
 
@@ -36,6 +38,8 @@ export default function App() {
           <Route path="/health"     element={<HealthPage />} />
           <Route path="/resources"  element={<ResourcesPage />} />
           <Route path="/events"     element={<EventsPage />} />
+          <Route path="/alerts"     element={<AlertsPage />} />
+          <Route path="/cafeteria"  element={<CafeteriaPage />} />
 
           {/* Admin-only routes */}
           <Route
