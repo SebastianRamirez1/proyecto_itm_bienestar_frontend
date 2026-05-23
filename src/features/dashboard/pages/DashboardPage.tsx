@@ -6,7 +6,7 @@ export default function DashboardPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-1">
-        Hola, {user?.name?.split(' ')[0]} 👋
+        Hola, {user?.email?.split('@')[0]} 👋
       </h1>
       <p className="text-gray-500 text-sm mb-8">
         Bienvenido al portal de Bienestar Universitario ITM

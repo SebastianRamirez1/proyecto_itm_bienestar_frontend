@@ -87,8 +87,8 @@ export default function AppLayout() {
       {/* User + logout at the bottom */}
       <div className="mt-auto border-t pt-4">
         <div className="px-3 py-2 mb-2">
-          <p className="text-sm font-medium text-gray-800 truncate">{user?.name}</p>
-          <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+          <p className="text-sm font-medium text-gray-800 truncate">{user?.email}</p>
+          <p className="text-xs text-gray-400 capitalize truncate">{user?.role}</p>
         </div>
         <button
           onClick={handleLogout}

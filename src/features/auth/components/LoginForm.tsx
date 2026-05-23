@@ -20,6 +20,7 @@ type FormValues = z.infer<typeof schema>;
 interface LoginResponse {
   data: {
     accessToken: string;
+    refreshToken: string;
     user: AuthUser;
   };
 }
@@ -43,8 +44,8 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const { data } = await apiClient.post<LoginResponse>(EP_AUTH_LOGIN, values);
-      login(data.data.user, data.data.accessToken);
-      toast.success(`¡Bienvenido, ${data.data.user.name}!`);
+      login(data.data.user, data.data.accessToken, data.data.refreshToken);
+      toast.success(`¡Bienvenido, ${data.data.user.email}!`);
       navigate(from, { replace: true });
     } catch (err) {
       toast.error(getErrorMessage(err, 'Credenciales inválidas'));

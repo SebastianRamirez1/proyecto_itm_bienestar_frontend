@@ -3,9 +3,12 @@ import { useAuthStore } from '../store/auth.store';
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 
+// Auth routes that should never trigger the silent-refresh interceptor
+const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
+
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
-  withCredentials: true, // send httpOnly refresh-token cookie
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,11 +32,8 @@ let failedQueue: Array<{
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(token!);
-    }
+    if (error) reject(error);
+    else resolve(token!);
   });
   failedQueue = [];
 };
@@ -45,7 +45,17 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    const requestPath = originalRequest?.url ?? '';
+    const isAuthRoute = AUTH_PATHS.some((p) => requestPath.includes(p));
+    const storedRefreshToken = useAuthStore.getState().refreshToken;
+
+    // Don't attempt refresh for auth routes, retried requests, or if no refresh token stored
+    if (
+      error.response?.status !== 401 ||
+      originalRequest._retry ||
+      isAuthRoute ||
+      !storedRefreshToken
+    ) {
       return Promise.reject(error);
     }
 
@@ -66,7 +76,7 @@ apiClient.interceptors.response.use(
     try {
       const { data } = await axios.post<{ data: { accessToken: string } }>(
         `${BASE_URL}/api/v1/auth/refresh`,
-        {},
+        { refreshToken: storedRefreshToken },
         { withCredentials: true },
       );
       const newToken = data.data.accessToken;

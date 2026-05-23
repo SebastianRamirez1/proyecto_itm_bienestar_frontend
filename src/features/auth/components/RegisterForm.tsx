@@ -27,6 +27,7 @@ type FormValues = z.infer<typeof schema>;
 interface LoginResponse {
   data: {
     accessToken: string;
+    refreshToken: string;
     user: AuthUser;
   };
 }
@@ -57,7 +58,7 @@ export default function RegisterForm() {
         email:    values.email,
         password: values.password,
       });
-      login(data.data.user, data.data.accessToken);
+      login(data.data.user, data.data.accessToken, data.data.refreshToken);
       toast.success('¡Cuenta creada! Bienvenido a Bienestar ITM');
       navigate('/dashboard', { replace: true });
     } catch (err) {
