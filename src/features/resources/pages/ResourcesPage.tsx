@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
-import { EP_RESOURCES } from '../../../api/endpoints';
+import { EP_LIBRARY_BOOKS } from '../../../api/endpoints';
 
 interface Resource {
   id: string;
@@ -17,7 +17,7 @@ interface ResourcesResponse {
 export default function ResourcesPage() {
   const { data, isLoading, isError } = useQuery<ResourcesResponse>({
     queryKey: ['resources'],
-    queryFn: () => apiClient.get(EP_RESOURCES).then((r) => r.data),
+    queryFn: () => apiClient.get(EP_LIBRARY_BOOKS).then((r) => r.data),
   });
 
   if (isLoading) return <PageShell>Cargando recursos…</PageShell>;

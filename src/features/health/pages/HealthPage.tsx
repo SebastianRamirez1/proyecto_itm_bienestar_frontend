@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
-import { EP_HEALTH_SCHEDULE, EP_HEALTH_CONTACTS, EP_HEALTH_APPOINTMENT } from '../../../api/endpoints';
+import { EP_HEALTH_SCHEDULE, EP_HEALTH_EMERGENCY, EP_HEALTH_APPOINTMENT } from '../../../api/endpoints';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -51,7 +51,7 @@ export default function HealthPage() {
 
   const { data: contactsData } = useQuery<ContactsData>({
     queryKey: ['health-contacts'],
-    queryFn: () => apiClient.get(EP_HEALTH_CONTACTS).then((r) => r.data),
+    queryFn: () => apiClient.get(EP_HEALTH_EMERGENCY).then((r) => r.data),
   });
 
   const {

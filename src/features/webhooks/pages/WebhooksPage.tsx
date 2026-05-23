@@ -7,18 +7,17 @@ import { apiClient } from '../../../api/client';
 import { EP_WEBHOOKS, EP_WEBHOOK_BY_ID } from '../../../api/endpoints';
 import { useApiError } from '../../../hooks/useApiError';
 
+// Backend shape: { id, url, active, createdAt } — no 'events' field
 interface Webhook {
   id: string;
   url: string;
-  events: string[];
   active: boolean;
   createdAt: string;
 }
 interface WebhooksResponse { data: Webhook[] }
 
 const schema = z.object({
-  url:    z.string().url('URL no válida'),
-  events: z.string().min(1, 'Ingresa al menos un evento'),
+  url: z.string().url('Ingresa una URL válida (debe empezar con https://)'),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -32,7 +31,7 @@ export default function WebhooksPage() {
   });
 
   const createWebhook = useMutation({
-    mutationFn: (values: { url: string; events: string[] }) =>
+    mutationFn: (values: { url: string }) =>
       apiClient.post(EP_WEBHOOKS, values),
     onSuccess: () => {
       toast.success('Webhook registrado');
@@ -56,8 +55,7 @@ export default function WebhooksPage() {
   });
 
   const onSubmit = (values: FormValues) => {
-    const events = values.events.split(',').map((e) => e.trim()).filter(Boolean);
-    createWebhook.mutate({ url: values.url, events });
+    createWebhook.mutate({ url: values.url });
   };
 
   const webhooks = data?.data ?? [];
@@ -66,39 +64,43 @@ export default function WebhooksPage() {
     <div className="max-w-3xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Webhooks</h1>
-        <p className="text-gray-500 text-sm mt-1">Recibe notificaciones en tu endpoint cuando ocurran eventos</p>
+        <p className="text-gray-500 text-sm mt-1">
+          Recibe notificaciones en tu endpoint cuando ocurran alertas críticas en el ITM
+        </p>
+      </div>
+
+      {/* Info banner */}
+      <div className="bg-primary-50 border border-primary/20 rounded-xl px-5 py-4 text-sm text-primary">
+        <p className="font-medium mb-1">¿Cómo funciona?</p>
+        <p className="text-primary/80">
+          Cada vez que se crea una alerta <strong>crítica</strong>, el sistema hace un POST firmado
+          con HMAC-SHA256 a tu URL. Para pruebas puedes usar{' '}
+          <a href="https://webhook.site" target="_blank" rel="noopener noreferrer"
+             className="underline font-medium">webhook.site</a>.
+        </p>
       </div>
 
       {/* Create form */}
       <section className="bg-white rounded-xl border p-6">
         <h2 className="font-semibold text-gray-800 mb-4">Registrar webhook</h2>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">URL de destino</label>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex gap-3">
+          <div className="flex-1">
             <input
               type="url"
               placeholder="https://tu-servidor.com/webhook"
-              className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.url ? 'border-red-400' : 'border-gray-300'}`}
+              className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${
+                errors.url ? 'border-red-400' : 'border-gray-300'
+              }`}
               {...register('url')}
             />
-            {errors.url && <p className="mt-1 text-xs text-red-500">{errors.url.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Eventos <span className="text-gray-400 font-normal">(separados por coma)</span>
-            </label>
-            <input
-              type="text"
-              placeholder="event.created, event.enrolled"
-              className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.events ? 'border-red-400' : 'border-gray-300'}`}
-              {...register('events')}
-            />
-            {errors.events && <p className="mt-1 text-xs text-red-500">{errors.events.message}</p>}
+            {errors.url && (
+              <p className="mt-1 text-xs text-red-500">{errors.url.message}</p>
+            )}
           </div>
           <button
             type="submit"
             disabled={createWebhook.isPending}
-            className="bg-primary hover:bg-primary-light text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+            className="bg-primary hover:bg-primary-light text-white font-semibold px-5 py-2 rounded-lg text-sm transition disabled:opacity-60 flex-shrink-0"
           >
             {createWebhook.isPending ? 'Registrando…' : 'Registrar'}
           </button>
@@ -108,24 +110,33 @@ export default function WebhooksPage() {
       {/* List */}
       <section className="bg-white rounded-xl border overflow-hidden">
         <div className="px-6 py-4 border-b">
-          <h2 className="font-semibold text-gray-800">Webhooks registrados</h2>
+          <h2 className="font-semibold text-gray-800">
+            Webhooks registrados
+            {webhooks.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-gray-400">({webhooks.length})</span>
+            )}
+          </h2>
         </div>
         {isLoading ? (
           <p className="text-gray-500 text-sm p-6">Cargando…</p>
         ) : webhooks.length === 0 ? (
-          <p className="text-gray-500 text-sm p-6">No hay webhooks registrados.</p>
+          <p className="text-gray-500 text-sm p-6">No tienes webhooks registrados.</p>
         ) : (
           <ul className="divide-y">
             {webhooks.map((wh) => (
               <li key={wh.id} className="px-6 py-4 flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">{wh.url}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {wh.events.join(', ')}
-                  </p>
-                  <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${wh.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {wh.active ? 'Activo' : 'Inactivo'}
-                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      wh.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {wh.active ? 'Activo' : 'Inactivo'}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(wh.createdAt).toLocaleDateString('es-CO')}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => deleteWebhook.mutate(wh.id)}

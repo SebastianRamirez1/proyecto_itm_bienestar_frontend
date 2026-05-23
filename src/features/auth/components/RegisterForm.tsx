@@ -12,7 +12,6 @@ import type { AuthUser } from '../../../store/auth.store';
 
 const schema = z
   .object({
-    name:            z.string().min(2, 'Mínimo 2 caracteres'),
     email:           z.string().email('Correo no válido')
       .refine((e) => e.endsWith('@itm.edu.co') || e.endsWith('@correo.itm.edu.co'), {
         message: 'Usa tu correo institucional (@itm.edu.co o @correo.itm.edu.co)',
@@ -113,14 +112,6 @@ export default function RegisterForm() {
         <p className="text-sm text-gray-500 mt-1">Regístrate con tu correo institucional</p>
       </div>
 
-      <Field
-        id="name"
-        label="Nombre completo"
-        placeholder="Juan Pérez"
-        autoComplete="name"
-        error={errors.name?.message}
-        reg={register('name')}
-      />
       <Field
         id="email"
         label="Correo electrónico"

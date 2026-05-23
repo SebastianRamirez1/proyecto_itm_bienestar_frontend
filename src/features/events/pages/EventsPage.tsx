@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
-import { EP_EVENTS, EP_EVENT_ENROLL } from '../../../api/endpoints';
+import { EP_EVENTS, EP_EVENT_REGISTER } from '../../../api/endpoints';
 import { toast } from 'sonner';
 import { useApiError } from '../../../hooks/useApiError';
 
@@ -26,7 +26,7 @@ export default function EventsPage() {
   });
 
   const enroll = useMutation({
-    mutationFn: (eventId: string) => apiClient.post(EP_EVENT_ENROLL(eventId)),
+    mutationFn: (eventId: string) => apiClient.post(EP_EVENT_REGISTER(eventId)),
     onSuccess: () => {
       toast.success('¡Inscripción exitosa!');
       qc.invalidateQueries({ queryKey: ['events'] });

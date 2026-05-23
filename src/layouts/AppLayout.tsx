@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthStore } from '../store/auth.store';
 import { apiClient } from '../api/client';
 import { EP_AUTH_LOGOUT } from '../api/endpoints';
 
@@ -33,8 +34,9 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
+    const refreshToken = useAuthStore.getState().refreshToken;
     try {
-      await apiClient.post(EP_AUTH_LOGOUT);
+      await apiClient.post(EP_AUTH_LOGOUT, { refreshToken });
     } finally {
       logout();
       navigate('/login', { replace: true });
