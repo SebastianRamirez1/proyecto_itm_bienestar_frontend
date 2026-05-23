@@ -8,12 +8,13 @@ import { SkeletonList } from '../../../components/Skeleton';
 interface Alert {
   id: string;
   title: string;
-  message: string;
+  body: string;
   severity: 'info' | 'warning' | 'critical';
-  isActive: boolean;
+  active: boolean;
   createdAt: string;
 }
 interface AlertsResponse {
+  success: boolean;
   data: Alert[];
 }
 
@@ -43,6 +44,7 @@ export default function AlertsPage() {
     warning:  allAlerts.filter((a) => a.severity === 'warning').length,
     critical: allAlerts.filter((a) => a.severity === 'critical').length,
   };
+
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -139,7 +141,7 @@ export default function AlertsPage() {
                       {cfg.label}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                  <p className="text-sm text-gray-600 mt-1">{alert.body}</p>
                   <p className="text-xs text-gray-400 mt-2">{dateStr}</p>
                 </div>
               </div>

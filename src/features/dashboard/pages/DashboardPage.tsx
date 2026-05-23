@@ -9,12 +9,12 @@ import { SkeletonCard } from '../../../components/Skeleton';
 /* ─── Types ─────────────────────────────────────────── */
 
 interface Alert {
-  id: string; title: string; message: string;
-  severity: 'info' | 'warning' | 'critical'; isActive: boolean;
+  id: string; title: string; body: string;
+  severity: 'info' | 'warning' | 'critical'; active: boolean;
 }
 interface Event {
-  id: string; title: string; date: string; location: string;
-  capacity: number; enrolledCount: number; isEnrolled?: boolean;
+  id: string; title: string; startDate: string; location: string;
+  maxCapacity: number | null; registeredCount: number;
 }
 interface MenuItem {
   id: string; name: string; price?: number; available: boolean; category: string;
@@ -22,8 +22,8 @@ interface MenuItem {
 interface Tip {
   id: string; content: string; category?: string;
 }
-interface AlertsResponse  { data: Alert[] }
-interface EventsResponse  { data: Event[] }
+interface AlertsResponse  { success: boolean; data: Alert[] }
+interface EventsResponse  { success: boolean; events: Event[] }
 interface MenuResponse    { data: MenuItem[] }
 interface TipsResponse    { data: Tip[] }
 
@@ -65,9 +65,9 @@ export default function DashboardPage() {
   // Derived data — use Array.isArray guard because backend may return non-array data shape
   const toArr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
   const criticalAlerts = toArr<Alert>(alertsQ.data?.data).filter(
-    (a) => a.isActive && (a.severity === 'critical' || a.severity === 'warning'),
+    (a) => a.active && (a.severity === 'critical' || a.severity === 'warning'),
   );
-  const upcomingEvents = toArr<Event>(eventsQ.data?.data).slice(0, 3);
+  const upcomingEvents = toArr<Event>(eventsQ.data?.events).slice(0, 3);
   const menuItems = toArr<MenuItem>(menuQ.data?.data).filter((m) => m.available).slice(0, 5);
   const tip = toArr<Tip>(tipsQ.data?.data)[0];
 
@@ -147,18 +147,18 @@ export default function DashboardPage() {
           {!eventsQ.isLoading && !eventsQ.isError && upcomingEvents.length > 0 && (
             <div className="bg-white rounded-xl border divide-y overflow-hidden">
               {upcomingEvents.map((e) => {
-                const dateStr = new Date(e.date).toLocaleDateString('es-CO', {
+                const dateStr = new Date(e.startDate).toLocaleDateString('es-CO', {
                   weekday: 'short', month: 'short', day: 'numeric',
                 });
-                const spotsLeft = e.capacity - e.enrolledCount;
+                const spotsLeft = e.maxCapacity != null ? e.maxCapacity - e.registeredCount : null;
                 return (
                   <div key={e.id} className="px-4 py-3 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{dateStr} · {e.location}</p>
                     </div>
-                    <span className={`text-xs font-medium flex-shrink-0 ${spotsLeft > 0 ? 'text-accent' : 'text-gray-400'}`}>
-                      {spotsLeft > 0 ? `${spotsLeft} cupos` : 'Sin cupos'}
+                    <span className={`text-xs font-medium flex-shrink-0 ${spotsLeft == null || spotsLeft > 0 ? 'text-accent' : 'text-gray-400'}`}>
+                      {spotsLeft == null ? 'Abierto' : spotsLeft > 0 ? `${spotsLeft} cupos` : 'Sin cupos'}
                     </span>
                   </div>
                 );

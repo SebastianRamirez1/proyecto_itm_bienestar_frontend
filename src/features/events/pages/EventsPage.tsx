@@ -10,13 +10,16 @@ interface Event {
   id: string;
   title: string;
   description: string;
-  date: string;
+  category: string;
+  startDate: string;
+  endDate: string;
   location: string;
-  capacity: number;
-  enrolledCount: number;
-  isEnrolled?: boolean;
+  maxCapacity: number | null;
+  registeredCount: number;
+  imageUrl?: string;
+  active: boolean;
 }
-interface EventsResponse { data: Event[] }
+interface EventsResponse { success: boolean; events: Event[]; meta?: unknown }
 
 export default function EventsPage() {
   const qc = useQueryClient();
@@ -37,7 +40,7 @@ export default function EventsPage() {
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 
-  const events: Event[] = Array.isArray(data?.data) ? data.data : [];
+  const events: Event[] = Array.isArray(data?.events) ? data.events : [];
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -71,28 +74,33 @@ export default function EventsPage() {
       {!isLoading && !isError && events.length > 0 && (
         <div className="grid sm:grid-cols-2 gap-4">
           {events.map((e) => {
-            const dateStr = new Date(e.date).toLocaleDateString('es-CO', {
+            const dateStr = new Date(e.startDate).toLocaleDateString('es-CO', {
               weekday: 'short', month: 'short', day: 'numeric',
             });
-            const spotsLeft = e.capacity - e.enrolledCount;
+            const spotsLeft = e.maxCapacity != null ? e.maxCapacity - e.registeredCount : null;
 
             return (
               <div key={e.id} className="bg-white rounded-xl border p-5 flex flex-col gap-3">
                 <div>
+                  <span className="inline-block text-xs font-semibold bg-primary/10 text-primary rounded-full px-2 py-0.5 mb-2 capitalize">
+                    {e.category}
+                  </span>
                   <h2 className="font-semibold text-gray-800">{e.title}</h2>
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">{e.description}</p>
                 </div>
                 <div className="text-xs text-gray-500 space-y-0.5">
                   <p>📅 {dateStr}</p>
                   <p>📍 {e.location}</p>
-                  <p>🪑 {spotsLeft > 0 ? `${spotsLeft} cupos disponibles` : 'Sin cupos'}</p>
+                  {spotsLeft != null && (
+                    <p>🪑 {spotsLeft > 0 ? `${spotsLeft} cupos disponibles` : 'Sin cupos'}</p>
+                  )}
                 </div>
                 <button
-                  disabled={e.isEnrolled || spotsLeft <= 0 || enroll.isPending}
+                  disabled={spotsLeft === 0 || enroll.isPending}
                   onClick={() => enroll.mutate(e.id)}
                   className="mt-auto bg-accent hover:opacity-90 text-white text-sm font-semibold py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {e.isEnrolled ? '✓ Inscrito' : 'Inscribirme'}
+                  Inscribirme
                 </button>
               </div>
             );
