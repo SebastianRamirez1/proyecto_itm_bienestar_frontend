@@ -13,8 +13,11 @@ import type { AuthUser } from '../../../store/auth.store';
 const schema = z
   .object({
     name:            z.string().min(2, 'Mínimo 2 caracteres'),
-    email:           z.string().email('Correo no válido'),
-    password:        z.string().min(6, 'Mínimo 6 caracteres'),
+    email:           z.string().email('Correo no válido')
+      .refine((e) => e.endsWith('@itm.edu.co') || e.endsWith('@correo.itm.edu.co'), {
+        message: 'Usa tu correo institucional (@itm.edu.co o @correo.itm.edu.co)',
+      }),
+    password:        z.string().min(8, 'Mínimo 8 caracteres'),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -47,8 +50,8 @@ export default function RegisterForm() {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
+      // Backend only accepts email + password (no name field in schema)
       await apiClient.post(EP_AUTH_REGISTER, {
-        name:     values.name,
         email:    values.email,
         password: values.password,
       });
