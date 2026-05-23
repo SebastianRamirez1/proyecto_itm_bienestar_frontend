@@ -23,7 +23,7 @@ export default function ResourcesPage() {
     staleTime: 5 * 60_000,
   });
 
-  const resources = data?.data ?? [];
+  const resources: Resource[] = Array.isArray(data?.data) ? data.data : [];
 
   return (
     <div className="max-w-4xl space-y-6">

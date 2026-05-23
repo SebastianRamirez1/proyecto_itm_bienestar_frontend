@@ -37,7 +37,7 @@ export default function EventsPage() {
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 
-  const events = data?.data ?? [];
+  const events: Event[] = Array.isArray(data?.data) ? data.data : [];
 
   return (
     <div className="max-w-4xl space-y-6">

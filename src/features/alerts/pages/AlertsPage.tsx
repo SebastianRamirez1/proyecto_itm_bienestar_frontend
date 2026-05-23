@@ -34,7 +34,7 @@ export default function AlertsPage() {
     staleTime: 60_000,
   });
 
-  const allAlerts = data?.data ?? [];
+  const allAlerts: Alert[] = Array.isArray(data?.data) ? data.data : [];
   const alerts = filter === 'all' ? allAlerts : allAlerts.filter((a) => a.severity === filter);
 
   const counts = {

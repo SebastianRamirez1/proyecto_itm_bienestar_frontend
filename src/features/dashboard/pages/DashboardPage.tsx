@@ -62,13 +62,14 @@ export default function DashboardPage() {
     staleTime: 10 * 60_000,
   });
 
-  // Derived data
-  const criticalAlerts = (alertsQ.data?.data ?? []).filter(
+  // Derived data — use Array.isArray guard because backend may return non-array data shape
+  const toArr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+  const criticalAlerts = toArr<Alert>(alertsQ.data?.data).filter(
     (a) => a.isActive && (a.severity === 'critical' || a.severity === 'warning'),
   );
-  const upcomingEvents = (eventsQ.data?.data ?? []).slice(0, 3);
-  const menuItems = (menuQ.data?.data ?? []).filter((m) => m.available).slice(0, 5);
-  const tip = (tipsQ.data?.data ?? [])[0];
+  const upcomingEvents = toArr<Event>(eventsQ.data?.data).slice(0, 3);
+  const menuItems = toArr<MenuItem>(menuQ.data?.data).filter((m) => m.available).slice(0, 5);
+  const tip = toArr<Tip>(tipsQ.data?.data)[0];
 
   const username = user?.email?.split('@')[0] ?? 'estudiante';
 

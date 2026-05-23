@@ -73,9 +73,9 @@ export default function CafeteriaPage() {
     staleTime: 30 * 60_000,
   });
 
-  const menuItems  = menu.data?.data ?? [];
-  const scheduleEntries = schedule.data?.data ?? [];
-  const priceItems = prices.data?.data ?? [];
+  const menuItems: MenuItem[]       = Array.isArray(menu.data?.data)     ? menu.data.data     : [];
+  const scheduleEntries: ScheduleEntry[] = Array.isArray(schedule.data?.data) ? schedule.data.data : [];
+  const priceItems: PriceItem[]     = Array.isArray(prices.data?.data)   ? prices.data.data   : [];
 
   // Group menu by category
   const menuByCategory = menuItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
