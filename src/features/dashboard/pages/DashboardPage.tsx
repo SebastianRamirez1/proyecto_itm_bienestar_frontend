@@ -17,14 +17,19 @@ interface Event {
   maxCapacity: number | null; registeredCount: number;
 }
 interface MenuItem {
-  id: string; name: string; price?: number; available: boolean; category: string;
+  name: string; category: string;
+}
+interface MenuData {
+  items: MenuItem[];
+  prices: Record<string, number>;
+  date: string;
 }
 interface Tip {
   id: string; content: string; category?: string;
 }
 interface AlertsResponse  { success: boolean; data: Alert[] }
 interface EventsResponse  { success: boolean; events: Event[] }
-interface MenuResponse    { data: MenuItem[] }
+interface MenuResponse    { success: boolean; data: MenuData }
 interface TipsResponse    { data: Tip[] }
 
 /* ─── Helpers ────────────────────────────────────────── */
@@ -68,7 +73,7 @@ export default function DashboardPage() {
     (a) => a.active && (a.severity === 'critical' || a.severity === 'warning'),
   );
   const upcomingEvents = toArr<Event>(eventsQ.data?.events).slice(0, 3);
-  const menuItems = toArr<MenuItem>(menuQ.data?.data).filter((m) => m.available).slice(0, 5);
+  const menuItems = Array.isArray(menuQ.data?.data?.items) ? menuQ.data!.data.items.slice(0, 5) : [];
   const tip = toArr<Tip>(tipsQ.data?.data)[0];
 
   const username = user?.email?.split('@')[0] ?? 'estudiante';
@@ -191,12 +196,10 @@ export default function DashboardPage() {
 
           {!menuQ.isLoading && !menuQ.isError && menuItems.length > 0 && (
             <div className="bg-white rounded-xl border divide-y overflow-hidden">
-              {menuItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between px-4 py-3 gap-3">
+              {menuItems.map((item, i) => (
+                <div key={i} className="flex items-center justify-between px-4 py-3 gap-3">
                   <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
-                  {item.price != null && (
-                    <span className="text-xs font-semibold text-accent flex-shrink-0">{formatCOP(item.price)}</span>
-                  )}
+                  <span className="text-xs text-gray-400 flex-shrink-0 capitalize">{item.category}</span>
                 </div>
               ))}
             </div>
