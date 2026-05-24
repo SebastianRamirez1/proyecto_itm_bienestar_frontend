@@ -77,16 +77,16 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-4xl space-y-8">
-      {/* Welcome */}
+      {/* Welcome — Principio 2.2: h1 más prominente */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Hola, {username} 👋</h1>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Hola, {username} 👋</h1>
         <p className="text-gray-500 text-sm mt-1">Bienvenido al portal de Bienestar Universitario ITM</p>
       </div>
 
       {/* ── Active alerts banner ─────────────────────── */}
       {criticalAlerts.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3" role="alert">
+          <AlertTriangle size={20} className="text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-red-700">
               {criticalAlerts.length === 1 ? 'Hay 1 alerta activa' : `Hay ${criticalAlerts.length} alertas activas`}
@@ -113,9 +113,9 @@ export default function DashboardPage() {
           <Link
             key={to}
             to={to}
-            className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition hover:shadow-md ${color}`}
+            className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center min-h-[72px] transition-all duration-150 ease-out hover:shadow-md hover:-translate-y-0.5 ${color}`}
           >
-            <Icon size={22} />
+            <Icon size={22} aria-hidden="true" />
             <span className="text-xs font-semibold">{label}</span>
           </Link>
         ))}
@@ -205,12 +205,13 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Health tip ───────────────────────────────── */}
+      {/* Principio 4.3: leading-relaxed en contenido de texto */}
       {tip && (
         <section className="bg-accent/5 border border-accent/20 rounded-xl p-4 flex gap-3">
-          <HeartPulse size={20} className="text-accent flex-shrink-0 mt-0.5" />
+          <HeartPulse size={20} className="text-accent flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
             <p className="text-xs font-semibold text-accent uppercase tracking-wide mb-1">Tip de bienestar</p>
-            <p className="text-sm text-gray-700">{tip.content}</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{tip.content}</p>
           </div>
         </section>
       )}

@@ -7,8 +7,61 @@
     box-sizing: border-box;
   }
 
+  html {
+    scroll-behavior: smooth;
+    /* Compensates for the mobile sticky topbar (~52px) so anchor links
+       don't land under the header. Desktop has no sticky bar, so 0 is fine. */
+    scroll-padding-top: 3.5rem;
+  }
+
   body {
     @apply bg-surface text-gray-900 antialiased;
     font-family: Inter, system-ui, sans-serif;
+    line-height: 1.625; /* leading-relaxed — Principio 4.3 */
+    overflow-wrap: break-word; /* Principio 7.5: emails / URLs largas no rompen layout */
+  }
+
+  /* Global focus-visible ring — Principio 1.4 & 9 */
+  :focus-visible {
+    outline: 2px solid #003087;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Skip link — Principio 3.4: visible solo al recibir foco con teclado */
+  .skip-link {
+    position: fixed;
+    top: -100%;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.5rem 1.25rem;
+    background-color: #003087;
+    color: #ffffff;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: top 150ms ease-out;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.2);
+  }
+
+  .skip-link:focus-visible {
+    top: 0.75rem;
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+  }
+}
+
+/* Principio 8.5: Respetar preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
