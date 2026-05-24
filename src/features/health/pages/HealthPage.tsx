@@ -1,13 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
-import { EP_HEALTH_SCHEDULE, EP_HEALTH_EMERGENCY, EP_HEALTH_APPOINTMENT } from '../../../api/endpoints';
+import { EP_HEALTH_SCHEDULE, EP_HEALTH_EMERGENCY, EP_HEALTH_APPOINTMENT, EP_HEALTH_APPOINTMENTS } from '../../../api/endpoints';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useApiError } from '../../../hooks/useApiError';
-import { SkeletonCard } from '../../../components/Skeleton';
+import { SkeletonCard, SkeletonList } from '../../../components/Skeleton';
+import { ClipboardList } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Campus {
@@ -33,6 +34,18 @@ interface ContactsData {
   data: Contact[];
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled';
+
+interface Appointment {
+  id: string;
+  preferredDate: string;
+  reason: string;
+  modality: 'presencial' | 'virtual';
+  status: AppointmentStatus;
+  createdAt: string;
+}
+
 // ── Appointment form ───────────────────────────────────────────────────────────
 const apptSchema = z.object({
   preferredDate: z.string().min(1, 'Selecciona una fecha'),
@@ -43,7 +56,14 @@ type ApptForm = z.infer<typeof apptSchema>;
 
 export default function HealthPage() {
   const { getErrorMessage } = useApiError();
+  const qc = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
+
+  const { data: apptData, isLoading: apptLoading } = useQuery<{ success: boolean; data: Appointment[] }>({
+    queryKey: ['my-appointments'],
+    queryFn: () => apiClient.get(EP_HEALTH_APPOINTMENTS).then((r) => r.data),
+    staleTime: 60_000,
+  });
 
   const { data: scheduleData, isLoading: scheduleLoading } = useQuery<ScheduleData>({
     queryKey: ['health-schedule'],
@@ -73,6 +93,7 @@ export default function HealthPage() {
       await apiClient.post(EP_HEALTH_APPOINTMENT, values);
       toast.success('Solicitud enviada. El equipo de psicología te contactará en 24 h hábiles.');
       reset();
+      qc.invalidateQueries({ queryKey: ['my-appointments'] });
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -159,6 +180,38 @@ export default function HealthPage() {
         </form>
       </section>
 
+      {/* My appointments */}
+      <section className="bg-white rounded-xl border p-6 space-y-4">
+        <h2 className="font-semibold text-gray-800 text-lg flex items-center gap-2">
+          <ClipboardList size={20} className="text-primary" />
+          Mis solicitudes de cita
+        </h2>
+
+        {apptLoading && <SkeletonList rows={3} />}
+
+        {!apptLoading && (apptData?.data ?? []).length === 0 && (
+          <p className="text-sm text-gray-400">No has solicitado citas aún.</p>
+        )}
+
+        {!apptLoading && (apptData?.data ?? []).length > 0 && (
+          <div className="divide-y">
+            {(apptData!.data).map((a) => (
+              <div key={a.id} className="py-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{a.reason}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 capitalize">
+                    {new Date(a.preferredDate).toLocaleDateString('es-CO', {
+                      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+                    })} · {a.modality}
+                  </p>
+                </div>
+                <AppointmentStatusBadge status={a.status} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Emergency contacts */}
       <section className="bg-white rounded-xl border p-6 space-y-4">
         <h2 className="font-semibold text-gray-800 text-lg">Contactos de emergencia</h2>
@@ -188,6 +241,20 @@ export default function HealthPage() {
         )}
       </section>
     </div>
+  );
+}
+
+function AppointmentStatusBadge({ status }: { status: AppointmentStatus }) {
+  const cfg = {
+    pending:   { label: 'Pendiente',  cls: 'bg-yellow-100 text-yellow-700' },
+    confirmed: { label: 'Confirmada', cls: 'bg-green-100  text-green-700'  },
+    cancelled: { label: 'Cancelada',  cls: 'bg-red-100    text-red-600'    },
+  }[status] ?? { label: status, cls: 'bg-gray-100 text-gray-600' };
+
+  return (
+    <span className={`flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.cls}`}>
+      {cfg.label}
+    </span>
   );
 }
 

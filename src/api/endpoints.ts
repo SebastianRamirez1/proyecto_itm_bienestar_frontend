@@ -10,7 +10,8 @@ export const EP_HEALTH_SCHEDULE    = '/health/schedule';
 export const EP_HEALTH_EMERGENCY   = '/health/emergency';        // was /health/emergency-contacts
 export const EP_HEALTH_RESOURCES   = '/health/resources';
 export const EP_HEALTH_TIPS        = '/health/tips';
-export const EP_HEALTH_APPOINTMENT = '/health/appointment';
+export const EP_HEALTH_APPOINTMENT  = '/health/appointment';
+export const EP_HEALTH_APPOINTMENTS = '/health/appointments';
 
 // Library (was incorrectly named 'resources')
 export const EP_LIBRARY_BOOKS      = '/library/books';
@@ -37,6 +38,7 @@ export const EP_EVENT_REGISTER     = (id: string) => `/events/${id}/register`; /
 // Webhooks
 export const EP_WEBHOOKS           = '/webhooks';
 export const EP_WEBHOOK_BY_ID      = (id: string) => `/webhooks/${id}`;
+export const EP_WEBHOOK_TEST       = (id: string) => `/webhooks/${id}/test`;
 
 // Metrics (admin)
 export const EP_METRICS            = '/metrics';

@@ -2,19 +2,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { FlaskConical, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { apiClient } from '../../../api/client';
-import { EP_WEBHOOKS, EP_WEBHOOK_BY_ID } from '../../../api/endpoints';
+import { EP_WEBHOOKS, EP_WEBHOOK_BY_ID, EP_WEBHOOK_TEST } from '../../../api/endpoints';
 import { useApiError } from '../../../hooks/useApiError';
+import { SkeletonList } from '../../../components/Skeleton';
 
-// Backend shape: { id, url, active, createdAt } — no 'events' field
 interface Webhook {
   id: string;
   url: string;
   active: boolean;
   createdAt: string;
 }
-interface WebhooksResponse { data: Webhook[] }
+interface WebhooksResponse { success: boolean; data: Webhook[] }
+interface TestResult { delivered: boolean; statusCode?: number; error?: string }
 
 const schema = z.object({
   url: z.string().url('Ingresa una URL válida (debe empezar con https://)'),
@@ -24,15 +27,16 @@ type FormValues = z.infer<typeof schema>;
 export default function WebhooksPage() {
   const qc = useQueryClient();
   const { getErrorMessage } = useApiError();
+  const [testResults, setTestResults] = useState<Record<string, TestResult>>({});
 
   const { data, isLoading } = useQuery<WebhooksResponse>({
     queryKey: ['webhooks'],
     queryFn: () => apiClient.get(EP_WEBHOOKS).then((r) => r.data),
+    staleTime: 60_000,
   });
 
   const createWebhook = useMutation({
-    mutationFn: (values: { url: string }) =>
-      apiClient.post(EP_WEBHOOKS, values),
+    mutationFn: (values: { url: string }) => apiClient.post(EP_WEBHOOKS, values),
     onSuccess: () => {
       toast.success('Webhook registrado');
       qc.invalidateQueries({ queryKey: ['webhooks'] });
@@ -50,15 +54,25 @@ export default function WebhooksPage() {
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 
+  const testWebhook = useMutation({
+    mutationFn: (id: string) =>
+      apiClient.post(EP_WEBHOOK_TEST(id)).then((r) => ({ id, result: r.data.data as TestResult })),
+    onSuccess: ({ id, result }) => {
+      setTestResults((prev) => ({ ...prev, [id]: result }));
+      if (result.delivered) {
+        toast.success(`Test enviado correctamente (HTTP ${result.statusCode})`);
+      } else {
+        toast.error(`Test fallido: ${result.error ?? `HTTP ${result.statusCode}`}`);
+      }
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
+  });
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = (values: FormValues) => {
-    createWebhook.mutate({ url: values.url });
-  };
-
-  const webhooks = data?.data ?? [];
+  const webhooks: Webhook[] = Array.isArray(data?.data) ? data.data : [];
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -70,20 +84,20 @@ export default function WebhooksPage() {
       </div>
 
       {/* Info banner */}
-      <div className="bg-primary-50 border border-primary/20 rounded-xl px-5 py-4 text-sm text-primary">
+      <div className="bg-primary/5 border border-primary/20 rounded-xl px-5 py-4 text-sm text-primary">
         <p className="font-medium mb-1">¿Cómo funciona?</p>
         <p className="text-primary/80">
-          Cada vez que se crea una alerta <strong>crítica</strong>, el sistema hace un POST firmado
-          con HMAC-SHA256 a tu URL. Para pruebas puedes usar{' '}
+          Cada vez que se crea una alerta <strong>crítica</strong>, el sistema hace un POST
+          a tu URL con el payload del evento. Para pruebas puedes usar{' '}
           <a href="https://webhook.site" target="_blank" rel="noopener noreferrer"
-             className="underline font-medium">webhook.site</a>.
+            className="underline font-medium">webhook.site</a>.
         </p>
       </div>
 
       {/* Create form */}
       <section className="bg-white rounded-xl border p-6">
         <h2 className="font-semibold text-gray-800 mb-4">Registrar webhook</h2>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex gap-3">
+        <form onSubmit={handleSubmit((v) => createWebhook.mutate({ url: v.url }))} noValidate className="flex gap-3">
           <div className="flex-1">
             <input
               type="url"
@@ -93,9 +107,7 @@ export default function WebhooksPage() {
               }`}
               {...register('url')}
             />
-            {errors.url && (
-              <p className="mt-1 text-xs text-red-500">{errors.url.message}</p>
-            )}
+            {errors.url && <p className="mt-1 text-xs text-red-500">{errors.url.message}</p>}
           </div>
           <button
             type="submit"
@@ -117,39 +129,89 @@ export default function WebhooksPage() {
             )}
           </h2>
         </div>
-        {isLoading ? (
-          <p className="text-gray-500 text-sm p-6">Cargando…</p>
-        ) : webhooks.length === 0 ? (
+
+        {isLoading && <div className="p-6"><SkeletonList rows={2} /></div>}
+
+        {!isLoading && webhooks.length === 0 && (
           <p className="text-gray-500 text-sm p-6">No tienes webhooks registrados.</p>
-        ) : (
+        )}
+
+        {!isLoading && webhooks.length > 0 && (
           <ul className="divide-y">
-            {webhooks.map((wh) => (
-              <li key={wh.id} className="px-6 py-4 flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{wh.url}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      wh.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {wh.active ? 'Activo' : 'Inactivo'}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(wh.createdAt).toLocaleDateString('es-CO')}
-                    </span>
+            {webhooks.map((wh) => {
+              const testResult = testResults[wh.id];
+              const isTesting = testWebhook.isPending && testWebhook.variables === wh.id;
+
+              return (
+                <li key={wh.id} className="px-6 py-4 space-y-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{wh.url}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          wh.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {wh.active ? 'Activo' : 'Inactivo'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(wh.createdAt).toLocaleDateString('es-CO')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <TestWebhookButton
+                        loading={isTesting}
+                        onClick={() => testWebhook.mutate(wh.id)}
+                      />
+                      <button
+                        onClick={() => deleteWebhook.mutate(wh.id)}
+                        disabled={deleteWebhook.isPending}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-50"
+                        title="Eliminar webhook"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <button
-                  onClick={() => deleteWebhook.mutate(wh.id)}
-                  disabled={deleteWebhook.isPending}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium flex-shrink-0 disabled:opacity-50"
-                >
-                  Eliminar
-                </button>
-              </li>
-            ))}
+
+                  {/* Test result */}
+                  {testResult && (
+                    <div className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
+                      testResult.delivered
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-red-50 text-red-700'
+                    }`}>
+                      {testResult.delivered
+                        ? <CheckCircle2 size={14} />
+                        : <XCircle size={14} />}
+                      {testResult.delivered
+                        ? `Entregado correctamente (HTTP ${testResult.statusCode})`
+                        : `Falló: ${testResult.error ?? `HTTP ${testResult.statusCode}`}`}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
     </div>
+  );
+}
+
+/* ── TestWebhookButton ───────────────────────────────────────────── */
+function TestWebhookButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-primary hover:text-primary transition disabled:opacity-50"
+      title="Enviar payload de prueba"
+    >
+      <FlaskConical size={14} className={loading ? 'animate-pulse' : ''} />
+      {loading ? 'Enviando…' : 'Probar'}
+    </button>
   );
 }
