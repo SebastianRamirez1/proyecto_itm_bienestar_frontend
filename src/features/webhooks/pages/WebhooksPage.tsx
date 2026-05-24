@@ -77,7 +77,7 @@ export default function WebhooksPage() {
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Webhooks</h1>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Webhooks</h1>
         <p className="text-gray-500 text-sm mt-1">
           Recibe notificaciones en tu endpoint cuando ocurran alertas críticas en el ITM
         </p>
@@ -109,10 +109,12 @@ export default function WebhooksPage() {
             />
             {errors.url && <p className="mt-1 text-xs text-red-500">{errors.url.message}</p>}
           </div>
+          {/* Principio 7.2: min-h-[44px] */}
           <button
             type="submit"
             disabled={createWebhook.isPending}
-            className="bg-primary hover:bg-primary-light text-white font-semibold px-5 py-2 rounded-lg text-sm transition disabled:opacity-60 flex-shrink-0"
+            className="bg-primary hover:bg-primary-light text-white font-semibold px-5 min-h-[44px] rounded-lg text-sm
+                       transition-all duration-150 ease-out disabled:opacity-60 flex-shrink-0"
           >
             {createWebhook.isPending ? 'Registrando…' : 'Registrar'}
           </button>
@@ -165,13 +167,14 @@ export default function WebhooksPage() {
                         loading={isTesting}
                         onClick={() => testWebhook.mutate(wh.id)}
                       />
+                      {/* Principio 7.2: min-h/w 44px en icon button */}
                       <button
                         onClick={() => deleteWebhook.mutate(wh.id)}
                         disabled={deleteWebhook.isPending}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-50"
-                        title="Eliminar webhook"
+                        aria-label="Eliminar webhook"
+                        className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all duration-150 ease-out disabled:opacity-50"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={16} aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -204,13 +207,15 @@ export default function WebhooksPage() {
 /* ── TestWebhookButton ───────────────────────────────────────────── */
 function TestWebhookButton({ loading, onClick }: { loading: boolean; onClick: () => void }) {
   return (
+    /* Principio 7.2: min-h-[44px] en botón de prueba */
     <button
       onClick={onClick}
       disabled={loading}
-      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-primary hover:text-primary transition disabled:opacity-50"
-      title="Enviar payload de prueba"
+      aria-label="Enviar payload de prueba al webhook"
+      className="flex items-center gap-1.5 min-h-[44px] text-xs font-medium px-3 rounded-lg border border-gray-200 text-gray-600
+                 hover:border-primary hover:text-primary transition-all duration-150 ease-out disabled:opacity-50"
     >
-      <FlaskConical size={14} className={loading ? 'animate-pulse' : ''} />
+      <FlaskConical size={14} className={loading ? 'animate-pulse' : ''} aria-hidden="true" />
       {loading ? 'Enviando…' : 'Probar'}
     </button>
   );

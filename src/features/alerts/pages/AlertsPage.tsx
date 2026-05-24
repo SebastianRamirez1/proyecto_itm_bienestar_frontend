@@ -51,16 +51,18 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Alertas</h1>
+          {/* Principio 2.2: h1 más prominente */}
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Alertas</h1>
           <p className="text-gray-500 text-sm mt-1">Avisos y comunicados del campus</p>
         </div>
+        {/* Principio 7.2: min-h-[44px] en el botón de actualizar */}
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition disabled:opacity-50"
+          className="flex items-center gap-2 min-h-[44px] px-3 text-sm text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50 transition-all duration-150 ease-out disabled:opacity-50"
           aria-label="Actualizar alertas"
         >
-          <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />
+          <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} aria-hidden="true" />
           Actualizar
         </button>
       </div>
@@ -75,7 +77,8 @@ export default function AlertsPage() {
             <button
               key={sev}
               onClick={() => setFilter(sev)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+              /* Principio 7.2: min-h-[44px] para touch target en mobile */
+              className={`inline-flex items-center gap-1 px-3 min-h-[44px] rounded-full text-xs font-semibold border transition-all duration-150 ease-out ${
                 isActive
                   ? 'bg-primary text-white border-primary'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
@@ -127,15 +130,16 @@ export default function AlertsPage() {
               day: 'numeric', month: 'short', year: 'numeric',
             });
             return (
-              <div
+              <article
                 key={alert.id}
                 className={`rounded-xl border p-4 flex gap-4 ${cfg.bg} ${cfg.border}`}
               >
-                <div className={`mt-0.5 flex-shrink-0 ${cfg.text}`}>
+                <div className={`mt-0.5 flex-shrink-0 ${cfg.text}`} aria-hidden="true">
                   <IconComp size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 flex-wrap">
+                    {/* h2 dentro de article — Principio 2.2 */}
                     <h2 className={`font-semibold text-sm ${cfg.text}`}>{alert.title}</h2>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.badge}`}>
                       {cfg.label}
@@ -144,7 +148,7 @@ export default function AlertsPage() {
                   <p className="text-sm text-gray-600 mt-1">{alert.body}</p>
                   <p className="text-xs text-gray-400 mt-2">{dateStr}</p>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>

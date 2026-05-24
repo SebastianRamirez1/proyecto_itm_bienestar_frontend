@@ -14,11 +14,12 @@ export default function AuthLayout() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-lg mb-4">
             <span className="text-primary font-extrabold text-2xl leading-none">ITM</span>
           </div>
-          <h1 className="text-white text-2xl font-bold tracking-tight">
+          {/* Principio 2.2: h1 con tamaño correcto en pantalla de login */}
+          <h1 className="text-white text-3xl font-bold tracking-tight">
             Bienestar Universitario
           </h1>
           <p className="text-primary-50 text-sm mt-1">
-            Instituto Tecnológico Metropolitano
+            Instituto Tecnológico Metropolitano · Medellín
           </p>
         </div>
 

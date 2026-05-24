@@ -45,11 +45,12 @@ function ErrorCard({ label, onRetry }: { label: string; onRetry: () => void }) {
   return (
     <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center space-y-2">
       <p className="text-sm text-red-700">No se pudo cargar {label}.</p>
+      {/* Principio 7.2: min-h-[44px] para touch target */}
       <button
         onClick={onRetry}
-        className="inline-flex items-center gap-1 text-xs text-red-600 underline hover:no-underline"
+        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 text-xs text-red-600 underline hover:no-underline transition-colors duration-150"
       >
-        <RefreshCw size={12} /> Reintentar
+        <RefreshCw size={12} aria-hidden="true" /> Reintentar
       </button>
     </div>
   );
@@ -92,7 +93,8 @@ export default function CafeteriaPage() {
     <div className="max-w-4xl space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Cafetería</h1>
+        {/* Principio 2.2: h1 más prominente */}
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Cafetería</h1>
         <p className="text-gray-500 text-sm mt-1">Menú del día, horarios y precios</p>
       </div>
 
