@@ -18,7 +18,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Pin to .nvmrc version for consistency with local environment
+          node-version-file: '.nvmrc'
           cache: npm
 
       - name: Install dependencies
@@ -26,6 +27,9 @@ jobs:
 
       - name: Type check
         run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
 
       - name: Build
         run: npm run build
