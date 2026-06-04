@@ -12,9 +12,11 @@ import type { AuthUser } from '../../../store/auth.store';
 
 const schema = z
   .object({
-    name:            z.string().min(2, 'Mínimo 2 caracteres'),
-    email:           z.string().email('Correo no válido'),
-    password:        z.string().min(6, 'Mínimo 6 caracteres'),
+    email:           z.string().email('Correo no válido')
+      .refine((e) => e.endsWith('@itm.edu.co') || e.endsWith('@correo.itm.edu.co'), {
+        message: 'Usa tu correo institucional (@itm.edu.co o @correo.itm.edu.co)',
+      }),
+    password:        z.string().min(8, 'Mínimo 8 caracteres'),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -27,6 +29,7 @@ type FormValues = z.infer<typeof schema>;
 interface LoginResponse {
   data: {
     accessToken: string;
+    refreshToken: string;
     user: AuthUser;
   };
 }
@@ -46,8 +49,8 @@ export default function RegisterForm() {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
+      // Backend only accepts email + password (no name field in schema)
       await apiClient.post(EP_AUTH_REGISTER, {
-        name:     values.name,
         email:    values.email,
         password: values.password,
       });
@@ -57,7 +60,7 @@ export default function RegisterForm() {
         email:    values.email,
         password: values.password,
       });
-      login(data.data.user, data.data.accessToken);
+      login(data.data.user, data.data.accessToken, data.data.refreshToken);
       toast.success('¡Cuenta creada! Bienvenido a Bienestar ITM');
       navigate('/dashboard', { replace: true });
     } catch (err) {
@@ -110,14 +113,6 @@ export default function RegisterForm() {
       </div>
 
       <Field
-        id="name"
-        label="Nombre completo"
-        placeholder="Juan Pérez"
-        autoComplete="name"
-        error={errors.name?.message}
-        reg={register('name')}
-      />
-      <Field
         id="email"
         label="Correo electrónico"
         type="email"
@@ -145,10 +140,14 @@ export default function RegisterForm() {
         reg={register('confirmPassword')}
       />
 
+      {/* Principio 7.2: min-h-[44px] + hover lift (Principio 5.4) */}
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-primary hover:bg-primary-light text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+        className="w-full bg-primary hover:bg-primary-light text-white font-semibold py-3 min-h-[44px] rounded-lg
+                   transition-all duration-150 ease-out
+                   hover:-translate-y-0.5 hover:shadow-md
+                   disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0 disabled:shadow-none text-sm"
       >
         {loading ? 'Creando cuenta…' : 'Crear cuenta'}
       </button>

@@ -1,12 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../api/client';
-import { EP_HEALTH_SCHEDULE, EP_HEALTH_CONTACTS, EP_HEALTH_APPOINTMENT } from '../../../api/endpoints';
+import { EP_HEALTH_SCHEDULE, EP_HEALTH_EMERGENCY, EP_HEALTH_APPOINTMENT, EP_HEALTH_APPOINTMENTS } from '../../../api/endpoints';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useApiError } from '../../../hooks/useApiError';
+import { SkeletonCard, SkeletonList } from '../../../components/Skeleton';
+import { ClipboardList } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Campus {
@@ -32,6 +34,18 @@ interface ContactsData {
   data: Contact[];
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled';
+
+interface Appointment {
+  id: string;
+  preferredDate: string;
+  reason: string;
+  modality: 'presencial' | 'virtual';
+  status: AppointmentStatus;
+  createdAt: string;
+}
+
 // ── Appointment form ───────────────────────────────────────────────────────────
 const apptSchema = z.object({
   preferredDate: z.string().min(1, 'Selecciona una fecha'),
@@ -42,16 +56,25 @@ type ApptForm = z.infer<typeof apptSchema>;
 
 export default function HealthPage() {
   const { getErrorMessage } = useApiError();
+  const qc = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: scheduleData } = useQuery<ScheduleData>({
-    queryKey: ['health-schedule'],
-    queryFn: () => apiClient.get(EP_HEALTH_SCHEDULE).then((r) => r.data),
+  const { data: apptData, isLoading: apptLoading } = useQuery<{ success: boolean; data: Appointment[] }>({
+    queryKey: ['my-appointments'],
+    queryFn: () => apiClient.get(EP_HEALTH_APPOINTMENTS).then((r) => r.data),
+    staleTime: 60_000,
   });
 
-  const { data: contactsData } = useQuery<ContactsData>({
+  const { data: scheduleData, isLoading: scheduleLoading } = useQuery<ScheduleData>({
+    queryKey: ['health-schedule'],
+    queryFn: () => apiClient.get(EP_HEALTH_SCHEDULE).then((r) => r.data),
+    staleTime: 30 * 60_000,
+  });
+
+  const { data: contactsData, isLoading: contactsLoading } = useQuery<ContactsData>({
     queryKey: ['health-contacts'],
-    queryFn: () => apiClient.get(EP_HEALTH_CONTACTS).then((r) => r.data),
+    queryFn: () => apiClient.get(EP_HEALTH_EMERGENCY).then((r) => r.data),
+    staleTime: 30 * 60_000,
   });
 
   const {
@@ -70,6 +93,7 @@ export default function HealthPage() {
       await apiClient.post(EP_HEALTH_APPOINTMENT, values);
       toast.success('Solicitud enviada. El equipo de psicología te contactará en 24 h hábiles.');
       reset();
+      qc.invalidateQueries({ queryKey: ['my-appointments'] });
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -85,11 +109,13 @@ export default function HealthPage() {
   return (
     <div className="max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Salud y Bienestar</h1>
+        {/* Principio 2.2: h1 más prominente */}
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Salud y Bienestar</h1>
         <p className="text-gray-500 text-sm mt-1">Agenda una cita psicológica o consulta contactos de emergencia</p>
       </div>
 
       {/* Schedule */}
+      {scheduleLoading && <SkeletonCard />}
       {schedule && (
         <section className="bg-white rounded-xl border p-6 space-y-4">
           <h2 className="font-semibold text-gray-800 text-lg">{schedule.serviceName}</h2>
@@ -102,10 +128,16 @@ export default function HealthPage() {
               </div>
             ))}
           </div>
-          <div className="text-sm text-gray-600">
+          {/* Principio 7.5: break-words para email largo */}
+          <div className="text-sm text-gray-600 leading-relaxed">
             <span className="font-medium">Atención virtual:</span> {schedule.virtualAttention}
             {' · '}
-            <a href={`mailto:${schedule.email}`} className="text-primary hover:underline">{schedule.email}</a>
+            <a
+              href={`mailto:${schedule.email}`}
+              className="text-primary hover:underline break-all transition-colors duration-150"
+            >
+              {schedule.email}
+            </a>
           </div>
         </section>
       )}
@@ -145,19 +177,60 @@ export default function HealthPage() {
               ))}
             </div>
           </div>
+          {/* Principio 7.2: py-3 = ~44px de altura mínima en el CTA principal */}
+          {/* Principio 5.3: texto de acción específica */}
           <button
             type="submit"
             disabled={submitting}
-            className="bg-primary hover:bg-primary-light text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition disabled:opacity-60"
+            className="bg-primary hover:bg-primary-light text-white font-semibold px-6 py-3 rounded-lg text-sm
+                       transition-all duration-150 ease-out
+                       hover:-translate-y-0.5 hover:shadow-md
+                       disabled:opacity-60 disabled:translate-y-0 disabled:shadow-none"
           >
             {submitting ? 'Enviando…' : 'Solicitar cita'}
           </button>
         </form>
       </section>
 
+      {/* My appointments */}
+      <section className="bg-white rounded-xl border p-6 space-y-4">
+        <h2 className="font-semibold text-gray-800 text-lg flex items-center gap-2">
+          <ClipboardList size={20} className="text-primary" />
+          Mis solicitudes de cita
+        </h2>
+
+        {apptLoading && <SkeletonList rows={3} />}
+
+        {!apptLoading && (apptData?.data ?? []).length === 0 && (
+          <p className="text-sm text-gray-400">No has solicitado citas aún.</p>
+        )}
+
+        {!apptLoading && (apptData?.data ?? []).length > 0 && (
+          <div className="divide-y">
+            {(apptData!.data).map((a) => (
+              <div key={a.id} className="py-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{a.reason}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 capitalize">
+                    {new Date(a.preferredDate).toLocaleDateString('es-CO', {
+                      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+                    })} · {a.modality}
+                  </p>
+                </div>
+                <AppointmentStatusBadge status={a.status} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Emergency contacts */}
       <section className="bg-white rounded-xl border p-6 space-y-4">
         <h2 className="font-semibold text-gray-800 text-lg">Contactos de emergencia</h2>
+        {contactsLoading && <SkeletonCard />}
+        {!contactsLoading && contacts.length === 0 && (
+          <p className="text-sm text-gray-400">No hay contactos de emergencia disponibles.</p>
+        )}
         {hotlines.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Líneas nacionales</p>
@@ -183,16 +256,31 @@ export default function HealthPage() {
   );
 }
 
+function AppointmentStatusBadge({ status }: { status: AppointmentStatus }) {
+  const cfg = {
+    pending:   { label: 'Pendiente',  cls: 'bg-yellow-100 text-yellow-700' },
+    confirmed: { label: 'Confirmada', cls: 'bg-green-100  text-green-700'  },
+    cancelled: { label: 'Cancelada',  cls: 'bg-red-100    text-red-600'    },
+  }[status] ?? { label: status, cls: 'bg-gray-100 text-gray-600' };
+
+  return (
+    <span className={`flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${cfg.cls}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
 function ContactCard({ contact }: { contact: Contact }) {
   return (
-    <div className="flex items-start justify-between rounded-lg bg-gray-50 px-4 py-3">
-      <div>
+    <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3 gap-3">
+      <div className="min-w-0">
         <p className="text-sm font-medium text-gray-800">{contact.name}</p>
         <p className="text-xs text-gray-500">{contact.available}</p>
       </div>
+      {/* Principio 7.2: min-h-[44px] en enlace de teléfono */}
       <a
         href={`tel:${contact.phone}`}
-        className="text-primary font-semibold text-sm hover:underline"
+        className="flex items-center min-h-[44px] text-primary font-semibold text-sm hover:underline transition-colors duration-150 flex-shrink-0"
       >
         {contact.phone}
       </a>

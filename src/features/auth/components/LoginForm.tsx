@@ -20,6 +20,7 @@ type FormValues = z.infer<typeof schema>;
 interface LoginResponse {
   data: {
     accessToken: string;
+    refreshToken: string;
     user: AuthUser;
   };
 }
@@ -43,8 +44,8 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const { data } = await apiClient.post<LoginResponse>(EP_AUTH_LOGIN, values);
-      login(data.data.user, data.data.accessToken);
-      toast.success(`¡Bienvenido, ${data.data.user.name}!`);
+      login(data.data.user, data.data.accessToken, data.data.refreshToken);
+      toast.success(`¡Bienvenido, ${data.data.user.email}!`);
       navigate(from, { replace: true });
     } catch (err) {
       toast.error(getErrorMessage(err, 'Credenciales inválidas'));
@@ -98,10 +99,14 @@ export default function LoginForm() {
         )}
       </div>
 
+      {/* Principio 7.2: min-h-[44px] + hover lift (Principio 5.4) */}
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-primary hover:bg-primary-light text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+        className="w-full bg-primary hover:bg-primary-light text-white font-semibold py-3 min-h-[44px] rounded-lg
+                   transition-all duration-150 ease-out
+                   hover:-translate-y-0.5 hover:shadow-md
+                   disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0 disabled:shadow-none text-sm"
       >
         {loading ? 'Ingresando…' : 'Ingresar'}
       </button>
