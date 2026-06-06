@@ -13,6 +13,7 @@ import ResourcesPage  from './features/resources/pages/ResourcesPage';
 import EventsPage     from './features/events/pages/EventsPage';
 import AlertsPage     from './features/alerts/pages/AlertsPage';
 import CafeteriaPage  from './features/cafeteria/pages/CafeteriaPage';
+import ProfilePage    from './features/auth/pages/ProfilePage';
 import MetricsPage    from './features/metrics/pages/MetricsPage';
 import WebhooksPage   from './features/webhooks/pages/WebhooksPage';
 
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/events"     element={<EventsPage />} />
           <Route path="/alerts"     element={<AlertsPage />} />
           <Route path="/cafeteria"  element={<CafeteriaPage />} />
+          <Route path="/profile"    element={<ProfilePage />} />
 
           {/* Admin-only routes */}
           <Route

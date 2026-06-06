@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   X,
+  UserCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -25,6 +26,7 @@ const navItems = [
   { to: '/events',     label: 'Eventos',     icon: Calendar },
   { to: '/cafeteria',  label: 'Cafetería',   icon: UtensilsCrossed },
   { to: '/alerts',     label: 'Alertas',     icon: Zap },
+  { to: '/profile',    label: 'Mi perfil',   icon: UserCircle },
 ];
 
 const adminItems = [
